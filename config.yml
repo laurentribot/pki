@@ -1,0 +1,7 @@
+authorities:
+- name: ac1
+  certificatefile: /home/laurent/ac1.pem
+  privatekeyfile: /home/laurent/ac1.key
+- name: ac2
+  certificatefile: /home/laurent/ac2.pem
+  privatekeyfile: /home/laurent/ac2.key
