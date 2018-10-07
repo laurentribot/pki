@@ -1,0 +1,50 @@
+package http
+
+import (
+	"encoding/json"
+	"github.com/gorilla/mux"
+	"log"
+	"net/http"
+	"pki/cert"
+	"pki/config"
+)
+
+type certifcateResponse struct {
+	Pem []byte `json:"pem"`
+}
+
+func respondWithError(w http.ResponseWriter, code int, msg string, r *http.Request) {
+	respondWithJson(w, code, map[string]string{"error": msg}, r)
+}
+
+func respondWithJson(w http.ResponseWriter, code int, payload interface{}, r *http.Request) {
+	response, _ := json.Marshal(payload)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(response)
+	log.Printf("- %s - %s %s - %d", r.RemoteAddr, r.Method, r.URL, http.StatusOK)
+}
+
+func getCertificate(w http.ResponseWriter, r *http.Request) {
+	csr := cert.CertificateRequest{}
+	err := json.NewDecoder(r.Body).Decode(&csr)
+	if err != nil {
+		panic(err)
+	}
+	pem := cert.GetCertificate(csr)
+	respondWithJson(w, http.StatusOK, certifcateResponse{pem}, r)
+}
+
+func getPrivateKey(w http.ResponseWriter, r *http.Request) {
+	pkey := cert.GetPrivateKey()
+
+	respondWithJson(w, http.StatusOK, pkey, r)
+}
+
+func HttpServer() {
+	router := mux.NewRouter()
+	router.HandleFunc("/certificate", getCertificate).Methods("POST")
+	router.HandleFunc("/pkey", getPrivateKey).Methods("GET")
+
+	log.Fatal(http.ListenAndServe(config.Config.Server.Listen_address+":"+config.Config.Server.Port, router))
+}
