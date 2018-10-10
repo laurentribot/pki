@@ -2,11 +2,12 @@ package http
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"pki/cert"
 	"pki/config"
+
+	"github.com/gorilla/mux"
 )
 
 type certifcateResponse struct {
@@ -22,16 +23,25 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}, r *ht
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(response)
-	log.Printf("- %s - %s %s - %d", r.RemoteAddr, r.Method, r.URL, http.StatusOK)
+	log.Printf("- %s - %s %s - %d", r.RemoteAddr, r.Method, r.URL, code)
 }
 
 func getCertificate(w http.ResponseWriter, r *http.Request) {
 	csr := cert.CertificateRequest{}
 	err := json.NewDecoder(r.Body).Decode(&csr)
 	if err != nil {
-		panic(err)
+		respondWithError(w, http.StatusBadRequest, "CSR invalide", r)
+		return
 	}
-	pem := cert.GetCertificate(csr)
+	if csr == (cert.CertificateRequest{}) {
+		respondWithError(w, http.StatusBadRequest, "CSR invalide", r)
+		return
+	}
+	pem, err := cert.GetCertificate(csr)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error(), r)
+		return
+	}
 	respondWithJson(w, http.StatusOK, certifcateResponse{pem}, r)
 }
 

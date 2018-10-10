@@ -10,6 +10,7 @@ import (
 	"encoding/asn1"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"math/big"
 	"pki/ca"
@@ -17,8 +18,8 @@ import (
 )
 
 type CertificateRequest struct {
-	Csr string
-	ac  string
+	Csr       string
+	Authority string
 }
 
 type PrivateKey struct {
@@ -57,10 +58,16 @@ func publicKey(priv interface{}) interface{} {
 	}
 }
 
-func GetCertificate(csr CertificateRequest) []byte {
-	data, _ := base64.StdEncoding.DecodeString(csr.Csr)
+func GetCertificate(csr CertificateRequest) ([]byte, error) {
+	data, err := base64.StdEncoding.DecodeString(csr.Csr)
+	if err != nil {
+		return nil, errors.New("CSR invalide")
+	}
 	block, _ := pem.Decode([]byte(data))
-	cetificateRequest, _ := x509.ParseCertificateRequest(block.Bytes)
+	cetificateRequest, err := x509.ParseCertificateRequest(block.Bytes)
+	if err != nil {
+		return nil, errors.New("CSR invalide")
+	}
 
 	notBefore := time.Now()
 	notAfter := notBefore.Add(10 * 365 * 24 * time.Hour)
@@ -85,12 +92,16 @@ func GetCertificate(csr CertificateRequest) []byte {
 		//BasicConstraintsValid: true,
 	}
 
-	parent := ca.Authorities["ac1"]
+	parent, ok := ca.Authorities[csr.Authority]
+	if !ok {
+		return nil, errors.New("Authority inconnue : " + csr.Authority)
+	}
 	derBytes, err := x509.CreateCertificate(rand.Reader, &cert, &parent.Certificate, cetificateRequest.PublicKey, &parent.Privatekey)
 	if err != nil {
 		fmt.Println(err)
 	}
-	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes}), nil
 }
 
 func GetPrivateKey() PrivateKey {
