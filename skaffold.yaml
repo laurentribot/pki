@@ -1,0 +1,12 @@
+apiVersion: skaffold/v1beta1
+kind: Config
+build:
+  artifacts:
+  - image: zed33xg1.distribution.edf.fr:1028/pki
+    docker:
+      buildArgs:
+        HTTPS_PROXY: http://proxy-nexus.adaje.oi.erdf.fr:3128
+deploy:
+  kubectl:
+    manifests:
+    - deployment.yaml

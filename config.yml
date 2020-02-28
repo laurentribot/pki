@@ -1,7 +1,6 @@
+server.port: 8088
 authorities:
-- name: ac1
-  certificatefile: /home/laurent/ac1.pem
-  privatekeyfile: /home/laurent/ac1.key
-- name: ac2
-  certificatefile: /home/laurent/ac2.pem
-  privatekeyfile: /home/laurent/ac2.key
+- name: ac
+  certificatefile: /home/A98376/ac.pem
+  privatekeyfile: /home/A98376/ac.key
+

@@ -51,10 +51,15 @@ func getPrivateKey(w http.ResponseWriter, r *http.Request) {
 	respondWithJson(w, http.StatusOK, pkey, r)
 }
 
+func healthz(w http.ResponseWriter, r *http.Request) {
+	respondWithJson(w, http.StatusOK, "ok", r)
+}
+
 func HttpServer() {
 	router := mux.NewRouter()
 	router.HandleFunc("/certificate", getCertificate).Methods("POST")
 	router.HandleFunc("/pkey", getPrivateKey).Methods("GET")
+	router.HandleFunc("/healthz", healthz).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(config.Config.Server.Listen_address+":"+config.Config.Server.Port, router))
 }
